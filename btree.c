@@ -226,9 +226,9 @@ void inOrder(struct node *root){
      int i;
      if (root == NULL) return;
      else {
-          for (i = 0; i < root->keyCount; i++){   // -1 since left and right key of every data box    
+          for (i = 0; i < root->keyCount - 1; i++){   // -1 since left and right key of every data box    
             inOrder(root->keys[i]);
-            if((void*)root->value[i] != NULL) printf("~%d~\n",root->value[i]);
+            printf("~%d~\n",root->value[i]);
           }
      }
 }
@@ -237,8 +237,8 @@ void levelOrder(struct node *root){
      int i;
      if (root == NULL) return;
      else {
-          for (i = 0; i < root->keyCount; i++){   // -1 since left and right key of every data box    
-            if((void*)root->value[i] != NULL || root->value[i] != (int)NULL) printf("%d ",root->value[i]);
+          for (i = 0; i < root->keyCount - 1; i++){   // -1 since left and right key of every data box    
+             printf("%d ",root->value[i]);
           }
           printf("   ");
           if (root->parent == NULL) printf("\n");
