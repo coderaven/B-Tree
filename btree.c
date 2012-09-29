@@ -9,6 +9,9 @@ struct node {
     int keyCount;
 } *tRoot = NULL;
 
+// Globals
+int treeOrder;
+
 // Menu functions
 void showMenu();
 void doInsert();
@@ -22,6 +25,12 @@ struct node* insertN(int value,struct node *root,struct node *parent);
 
 
 int main(){
+    // Initialize
+    printf("--- Initialization ---\n");
+    printf("B-Tree Order: ");
+    scanf("%d",&treeOrder);
+    
+    // Run menu
     showMenu();
     
     getch();
@@ -62,7 +71,7 @@ void doInsert(){
      
      tRoot = insertN(value,tRoot,tRoot);
      
-     printf("Press any key to continue...\n");
+     printf("\n\n\nPress any key to continue...\n");
      getch();
      showMenu();
 }
@@ -71,7 +80,7 @@ void doDelete(){
      system("cls"); 
      printf("--- Deletion ---\n");
      
-     printf("Press any key to continue...\n");
+     printf("\n\n\nPress any key to continue...\n");
      getch();
      showMenu();
 }
@@ -80,17 +89,20 @@ void doSearch(){
      system("cls"); 
      printf("--- Search ---\n");
      
-     printf("Press any key to continue...\n");
+     printf("\n\n\nPress any key to continue...\n");
      getch();
      showMenu();
 }
 
 void doInOrder(){
+     int i;
+     
      system("cls"); 
      printf("--- Printing ---\n");
-     printf("%d\n",tRoot->value[0]);
      
-     printf("Press any key to continue...\n");
+     for (i = 0; i < tRoot->keyCount - 1; i++) printf("%d ", tRoot->value[i]);
+     
+     printf("\n\n\nPress any key to continue...\n");
      getch();
      showMenu();
 }
@@ -102,12 +114,46 @@ struct node* newNode(int value,struct node *parent){
        root->keyCount = 2;
        root->parent = parent;
        
+       int i;
+       for (i = 1; i < MAX; i++) root->value[i] = (int)NULL;
+       
        return root;
 }
 
 struct node* insertN(int value,struct node *root,struct node *parent){
-       if (root == NULL){
+       int i = 0, j;
+       
+       if (root == NULL){ // If the tree doesn't have a value yet
           return newNode(value,parent);
+       } else { 
+          while(1){
+             if ( (void*)root->value[i] != NULL ){ // If there is a value in the current box
+                if (value == root->value[i]){ // If the value is already inserted
+                   printf("Data Already inserted!\n");
+                   break;
+                } else if ( value >= root->value[i] ){ // if value to be inserted is greater, then proceed to next box
+                   i++;
+                   continue;
+                } else { // This is if the value to be inserted is lesser which means, we can put it now
+                   for (j = treeOrder - 2; j >= i; j--) root->value[j+1] = root->value[j]; // move everything to the right
+                   root->value[i] = value;
+                   root->keyCount++;
+                   
+                   printf("Keys: %d\n",root->keyCount);
+                   break;
+                }
+             } else { // else if the box is null. Insert directly
+               root->value[i] = value;
+               root->keyCount++;
+               
+               printf("Keys: %d\n",root->keyCount);
+               break;
+             }   
+             
+             i++;       
+          } 
        }
+       
+       return root;
 }
 
