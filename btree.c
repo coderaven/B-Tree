@@ -23,6 +23,8 @@ void doInOrder();
 struct node* newNode(int value,struct node *parent);
 struct node* insertN(int value,struct node *root,struct node *parent);
 
+// Printing
+void inOrder(struct node *root);
 
 int main(){
     // Initialize
@@ -86,6 +88,8 @@ void doDelete(){
 }
 
 void doSearch(){
+     int toFind;
+     
      system("cls"); 
      printf("--- Search ---\n");
      
@@ -100,7 +104,9 @@ void doInOrder(){
      system("cls"); 
      printf("--- Printing ---\n");
      
-     for (i = 0; i < tRoot->keyCount - 1; i++) printf("%d ", tRoot->value[i]);
+     //for (i = 0; i < tRoot->keyCount - 1; i++) printf("%d ", tRoot->value[i]);
+     if (tRoot != NULL) inOrder(tRoot);
+     else printf("\nThe tree is empty!\n");
      
      printf("\n\n\nPress any key to continue...\n");
      getch();
@@ -115,7 +121,10 @@ struct node* newNode(int value,struct node *parent){
        root->parent = parent;
        
        int i;
-       for (i = 1; i < MAX; i++) root->value[i] = (int)NULL;
+       for (i = 1; i < MAX; i++) {
+           root->value[i] = (int)NULL; // Typcast and wrap NULL into an int for equality purposes
+           root->keys[i] = NULL;
+       }
        
        return root;
 }
@@ -126,7 +135,7 @@ struct node* insertN(int value,struct node *root,struct node *parent){
        if (root == NULL){ // If the tree doesn't have a value yet
           return newNode(value,parent);
        } else { 
-          while(1){
+          while(1){ // Loop for inserting data in a node rect
              if ( (void*)root->value[i] != NULL ){ // If there is a value in the current box
                 if (value == root->value[i]){ // If the value is already inserted
                    printf("Data Already inserted!\n");
@@ -152,8 +161,26 @@ struct node* insertN(int value,struct node *root,struct node *parent){
              
              i++;       
           } 
+          
+          if (root->keyCount > treeOrder){ // Overflow
+             printf("Overflow! Splitting and Promoting...\n");
+             struct node *leftHalf = (struct node*)malloc(sizeof(struct node));
+             struct node *rightHalf = (struct node*)malloc(sizeof(struct node));
+          }
        }
        
        return root;
+}
+
+// Printing
+void inOrder(struct node *root){
+     int i;
+     if (root == NULL) return;
+     else {
+          for (i = 0; i < root->keyCount - 1; i++){   // -1 since left and right key of every data box    
+            inOrder(root->keys[i]);
+            printf("~%d~\n",root->value[i]);
+          }
+     }
 }
 
