@@ -127,7 +127,7 @@ struct node* newNode(int value,struct node *parent){
        root->parent = parent;
        
        int i;
-       for (i = 1; i < MAX; i++) {
+       for (i = 1; i <= treeOrder + 2; i++) {
            root->value[i] = (int)NULL; // Typcast and wrap NULL into an int for equality purposes
            root->keys[i] = NULL;
        }
@@ -147,20 +147,24 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                    printf("Data Already inserted!\n");
                    break;
                 } else if ( value > root->value[i] ){ // if value to be inserted is greater, then proceed to next box
-                   //if (root->keys[i+1] != NULL) insertN(value,root->keys[i],root);
-                   //else 
-                   i++;
+                   if (root->keys[i+1] != NULL && root->keys[i+1]->keyCount < treeOrder + 1) {
+                       root->keys[i+1] = insertN(value,root->keys[i+1],root);
+                       break;
+                   } else i++;
                    
                    continue;
                 } else { // This is if the value to be inserted is lesser which means, we can put it now
-                   //if (root->keys[i] != NULL) insertN(value,root->keys[i],root);
-                   
+                   if (root->keys[i] != NULL && root->keys[i]->keyCount < treeOrder + 1) {
+                       root->keys[i] = insertN(value,root->keys[i],root);
+                       break;
+                   } else {
                      for (j = treeOrder - 2; j >= i; j--) root->value[j+1] = root->value[j]; // move everything to the right
                      root->value[i] = value;
                      root->keyCount++;
                      
                      printf("Keys: %d\n",root->keyCount);
                      break;
+                   }
                    
                 }
              } else { // else if the box is null. Insert directly
@@ -180,14 +184,14 @@ struct node* insertN(int value,struct node *root,struct node *parent){
              int mid = (treeOrder-1)/2;
           
              printf("Overflow! Splitting and Promoting...\n");
-             struct node *leftHalf = (struct node*)malloc(sizeof(struct node));
-             struct node *rightHalf = (struct node*)malloc(sizeof(struct node));
+             struct node *leftHalf = NULL;
+             struct node *rightHalf = NULL;
              
              for (i = 0; i <= left; i++){ // Move all left half data to new LeftHalf Box
                  leftHalf = insertN(root->value[i],leftHalf,NULL); // Set the parent to NULL temporarily
              }
              
-             for (i = right; i <= treeOrder; i++){ // Move all right half data to new LeftHalf Box
+             for (i = right; i < treeOrder; i++){ // Move all right half data to new LeftHalf Box
                  rightHalf = insertN(root->value[i],rightHalf,NULL); // pointer arithmethic
              }
              
@@ -199,6 +203,13 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                rightHalf->parent = root;
                root->keys[0] = leftHalf;
                root->keys[1] = rightHalf;
+             } else {
+               for (i = 0; i < tempRoot->parent->keyCount; i++){ 
+                   if (tempRoot->parent->keys[i] == tempRoot){
+                      tempRoot->parent->keys[i]   = leftHalf;
+                      tempRoot->parent->keys[i+1] = rightHalf;
+                   }
+               }
              }
              
              // To do : Non special case split and distribute... or if parent has a parent with values
@@ -227,9 +238,9 @@ void levelOrder(struct node *root){
      if (root == NULL) return;
      else {
           for (i = 0; i < root->keyCount; i++){   // -1 since left and right key of every data box    
-            if((void*)root->value[i] != NULL) printf("%d ",root->value[i]);
+            if((void*)root->value[i] != NULL || root->value[i] != (int)NULL) printf("%d ",root->value[i]);
           }
-          
+          printf("   ");
           if (root->parent == NULL) printf("\n");
           else {
                for (i = 0; i < root->parent->keyCount; i++){ // Check if had a right sibling, if none then proceed to next level
