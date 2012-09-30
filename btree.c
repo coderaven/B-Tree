@@ -71,7 +71,7 @@ void doInsert(){
      system("cls"); 
      printf("--- Insertion ---\n");
      printf("Value: ");
-     scanf("%d",&value);
+      scanf("%d",&value);
      
      tRoot = insertN(value,tRoot,NULL);
      
@@ -147,7 +147,8 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                    printf("Data Already inserted!\n");
                    break;
                 } else if ( value > root->value[i] ){ // if value to be inserted is greater, then proceed to next box
-                   if (root->keys[i+1] != NULL && root->keys[i+1]->keyCount < treeOrder + 1) {
+                   if (root->keys[i+1] != NULL && root->keys[i+1]->keyCount < treeOrder + 1 && root->value[i+1] > value) {
+                      PUT_RIGHT:
                        root->keys[i+1] = insertN(value,root->keys[i+1],root);
                        break;
                    } else i++;
@@ -155,6 +156,7 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                    continue;
                 } else { // This is if the value to be inserted is lesser which means, we can put it now
                    if (root->keys[i] != NULL && root->keys[i]->keyCount < treeOrder + 1) {
+                      PUT_LEFT:
                        root->keys[i] = insertN(value,root->keys[i],root);
                        break;
                    } else {
@@ -171,6 +173,11 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                    
                 }
              } else { // else if the box is null or the last box. Insert directly
+               if (root->keys[i] != NULL && root->keys[i]->keyCount < treeOrder + 1) {
+                  printf("Succes!\n");
+                  goto PUT_LEFT;
+               }
+               
                root->value[i] = value;
                root->keyCount++;
                
