@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-#define MAX 100
+#define MAX 30
 
 // B-Tree Node Structure
 struct node {
@@ -146,10 +146,12 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                 if (value == root->value[i]){ // If the value is already inserted
                    printf("Data Already inserted!\n");
                    break;
-                } else if ( value > root->value[i] ){ // if value to be inserted is greater, then proceed to next box
+                } else if ( value > root->value[i]){ // if value to be inserted is greater, then proceed to next box
                    if (root->keys[i+1] != NULL && root->keys[i+1]->keyCount < treeOrder + 1) {
-                       root->keys[i+1] = insertN(value,root->keys[i+1],root);
-                       break;
+                       if ( ( (void*)root->value[i+1] != NULL && value < root->value[i+1] ) || root == tRoot){
+                        root->keys[i+1] = insertN(value,root->keys[i+1],root);
+                        break;
+                       } else i++;
                    } else i++;
                    
                    continue;
@@ -192,24 +194,19 @@ struct node* insertN(int value,struct node *root,struct node *parent){
              }
              
              for (i = right; i < treeOrder; i++){ // Move all right half data to new LeftHalf Box
-                 rightHalf = insertN(root->value[i],rightHalf,NULL); // pointer arithmethic
+                 rightHalf = insertN(root->value[i],rightHalf,NULL); 
              }
              
-             struct node *tempRoot = root;
-             root = insertN(root->value[mid],parent,parent);
+             struct node *tempRoot = root; // Temporarily hold old root box
+             struct node *parentP = root->parent == NULL ? NULL : root->parent->parent; // Parent of the parents
+             
+             root->parent = insertN(root->value[mid],root->parent,parentP);
              
              if (parent == NULL){ // Special case if splitted is the tRoot (The very Root)
                leftHalf->parent = root;
                rightHalf->parent = root;
-               root->keys[0] = leftHalf;
-               root->keys[1] = rightHalf;
-             } else {
-               for (i = 0; i < tempRoot->parent->keyCount; i++){ 
-                   if (tempRoot->parent->keys[i] == tempRoot){
-                      tempRoot->parent->keys[i]   = leftHalf;
-                      tempRoot->parent->keys[i+1] = rightHalf;
-                   }
-               }
+               parent->keys[0] = leftHalf;
+               parent->keys[1] = rightHalf;
              }
              
              // To do : Non special case split and distribute... or if parent has a parent with values
@@ -226,6 +223,7 @@ void inOrder(struct node *root){
      int i;
      if (root == NULL) return;
      else {
+          //root = root->keys[0];
           for (i = 0; i < root->keyCount - 1; i++){   // -1 since left and right key of every data box    
             inOrder(root->keys[i]);
             printf("~%d~\n",root->value[i]);
@@ -234,6 +232,7 @@ void inOrder(struct node *root){
 }
 
 void levelOrder(struct node *root){
+     /**
      int i;
      if (root == NULL) return;
      else {
@@ -243,7 +242,7 @@ void levelOrder(struct node *root){
           printf("   ");
           if (root->parent == NULL) printf("\n");
           else {
-               for (i = 0; i < root->parent->keyCount; i++){ // Check if had a right sibling, if none then proceed to next level
+               for (i = 0; i < root->parent->keyCount - 1; i++){ // Check if had a right sibling, if none then proceed to next level
                    if (root->parent->keys[i] == root){
                       if (root->parent->keys[i+1] == NULL) printf("\n");
                       break;
@@ -255,5 +254,6 @@ void levelOrder(struct node *root){
             levelOrder(root->keys[i]);
           }
      }
+     **/
 }
 
