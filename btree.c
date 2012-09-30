@@ -158,7 +158,10 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                        root->keys[i] = insertN(value,root->keys[i],root);
                        break;
                    } else {
-                     for (j = treeOrder - 2; j >= i; j--) root->value[j+1] = root->value[j]; // move everything to the right
+                     for (j = treeOrder - 2; j >= i; j--) {
+                         root->value[j+1] = root->value[j]; // move everything to the right
+                         root->keys[j+2] = root->keys[j+1];
+                     }
                      root->value[i] = value;
                      root->keyCount++;
                      
@@ -167,7 +170,7 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                    }
                    
                 }
-             } else { // else if the box is null. Insert directly
+             } else { // else if the box is null or the last box. Insert directly
                root->value[i] = value;
                root->keyCount++;
                
@@ -188,11 +191,13 @@ struct node* insertN(int value,struct node *root,struct node *parent){
              struct node *rightHalf = NULL;
              
              for (i = 0; i <= left; i++){ // Move all left half data to new LeftHalf Box
-                 leftHalf = insertN(root->value[i],leftHalf,NULL); // Set the parent to NULL temporarily
+                 leftHalf = insertN(root->value[i],leftHalf,parent); // Set the parent to NULL temporarily
+                 leftHalf->keys[i] = root->keys[i];
              }
              
              for (i = right; i < treeOrder; i++){ // Move all right half data to new LeftHalf Box
-                 rightHalf = insertN(root->value[i],rightHalf,NULL);
+                 rightHalf = insertN(root->value[i],rightHalf,parent);
+                 rightHalf->keys[i] = root->keys[i];
              }
              
              int pIsNull = parent == NULL ? 1 : 0;
