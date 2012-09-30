@@ -192,29 +192,35 @@ struct node* insertN(int value,struct node *root,struct node *parent){
              }
              
              for (i = right; i < treeOrder; i++){ // Move all right half data to new LeftHalf Box
-                 rightHalf = insertN(root->value[i],rightHalf,NULL); // pointer arithmethic
+                 rightHalf = insertN(root->value[i],rightHalf,NULL);
              }
              
+             int pIsNull = parent == NULL ? 1 : 0;
              struct node *tempRoot = root;
-             root = insertN(root->value[mid],parent,parent);
+             struct node *pParent = pIsNull ? NULL : parent->parent;
              
-             if (parent == NULL){ // Special case if splitted is the tRoot (The very Root)
-               leftHalf->parent = root;
-               rightHalf->parent = root;
-               root->keys[0] = leftHalf;
-               root->keys[1] = rightHalf;
+             parent = insertN(root->value[mid],parent,pParent);
+             
+             if (pIsNull){ // Special case if splitted is the tRoot (The very Root)
+               leftHalf->parent = parent;
+               rightHalf->parent = parent;
+               parent->keys[0] = leftHalf;
+               parent->keys[1] = rightHalf;
+               
+               free(tempRoot); // Delete old root node box
+               return parent;
              } else {
-               for (i = 0; i < tempRoot->parent->keyCount; i++){ 
-                   if (tempRoot->parent->keys[i] == tempRoot){
-                      tempRoot->parent->keys[i]   = leftHalf;
-                      tempRoot->parent->keys[i+1] = rightHalf;
+               for (i = 0; i < parent->keyCount; i++){ 
+                   if (parent->keys[i] == tempRoot){
+                      parent->keys[i]   = leftHalf;
+                      parent->keys[i+1] = rightHalf;
                    }
                }
+               free(tempRoot);
+               return leftHalf;
              }
              
              // To do : Non special case split and distribute... or if parent has a parent with values
-             
-             free(tempRoot); // Delete old root node box
           }
        }
        
@@ -226,7 +232,7 @@ void inOrder(struct node *root){
      int i;
      if (root == NULL) return;
      else {
-          //root = root->keys[1];
+          // root = root->keys[2];
           for (i = 0; i < root->keyCount; i++){   // -1 since left and right key of every data box    
             inOrder(root->keys[i]);
             if (i < root->keyCount - 1) printf("~%d~\n",root->value[i]);
