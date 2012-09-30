@@ -200,12 +200,12 @@ struct node* insertN(int value,struct node *root,struct node *parent){
              for (i = 0; i <= left; i++){ // Move all left half data to new LeftHalf Box
                  leftHalf = insertN(root->value[i],leftHalf,parent); // Set the parent to NULL temporarily
                  leftHalf->keys[i] = root->keys[i];
-             }
+             } leftHalf->keys[left+1] = root->keys[left+1];
              
              for (i = right; i < treeOrder; i++){ // Move all right half data to new LeftHalf Box
                  rightHalf = insertN(root->value[i],rightHalf,parent);
                  rightHalf->keys[i] = root->keys[i];
-             }
+             } rightHalf->keys[treeOrder] = root->keys[treeOrder];
              
              int pIsNull = parent == NULL ? 1 : 0;
              struct node *tempRoot = root;
