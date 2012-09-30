@@ -10,6 +10,11 @@ struct node {
     int keyCount;
 } *tRoot = NULL;
 
+struct nodePosition {
+    int key;
+    struct node* box;
+};
+
 // Globals
 int treeOrder;
 
@@ -23,6 +28,8 @@ void doInOrder();
 // Tree Operations
 struct node* newNode(int value,struct node *parent);
 struct node* insertN(int value,struct node *root,struct node *parent);
+struct node* searchNValue(int value,struct node *root);
+struct nodePosition* searchNBox(struct node *toFind,struct node *root);
 
 // Printing
 void inOrder(struct node *root);
@@ -94,6 +101,11 @@ void doSearch(){
      
      system("cls"); 
      printf("--- Search ---\n");
+     printf("To Find: ");
+     scanf("%d",&toFind);
+     
+     if (searchNValue(toFind,tRoot) == NULL) printf("Not found!\n");
+     else printf("found!\n");
      
      printf("\n\n\nPress any key to continue...\n");
      getch();
@@ -221,6 +233,14 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                //free(tempRoot); // Delete old root node box
                return parent;
              } else {
+               // Find the parent of the current left and right box
+               struct nodePosition *nodeF = searchNBox(tempRoot,parent);
+               if (nodeF != NULL){
+                  nodeF->box->keys[nodeF->key]   = leftHalf;
+                  nodeF->box->keys[nodeF->key+1] = rightHalf;
+               }
+               
+               /*
                for (i = 0; i < parent->keyCount; i++){ 
                    if (parent->keys[i] == tempRoot){
                       parent->keys[i]   = leftHalf;
@@ -234,6 +254,8 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                       }
                    }
                }
+               */
+               
                
                free(tempRoot);
                return leftHalf;
@@ -244,6 +266,38 @@ struct node* insertN(int value,struct node *root,struct node *parent){
        }
        
        return root;
+}
+
+struct node* searchNValue(int value,struct node *root){
+       int i;
+       struct node *nodeF = NULL;
+       if (root == NULL) return NULL;
+       else {
+          for (i = 0; i < root->keyCount; i++){   // -1 since left and right key of every data box    
+            if (root->value[i] == value) return root;
+            else if (nodeF != NULL) return nodeF;
+            else nodeF =  searchNValue(value,root->keys[i]);
+          }  
+          return nodeF;
+       }
+}
+
+struct nodePosition* searchNBox(struct node *toFind,struct node *root){
+       int i;
+       struct nodePosition *nodeF = NULL;
+       if (root == NULL) return NULL;
+       else {
+          for (i = 0; i < root->keyCount; i++){   // -1 since left and right key of every data box    
+            if (root == toFind) {
+               nodeF->box = root;
+               nodeF->key = i;
+               return nodeF;
+            }
+            else if (nodeF != NULL) return nodeF;
+            else nodeF =  searchNBox(toFind,root->keys[i]);
+          }  
+          return nodeF;
+       }
 }
 
 // Printing
