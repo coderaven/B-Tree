@@ -106,7 +106,6 @@ void doInOrder(){
      system("cls"); 
      printf("--- Printing ---\n");
      
-     //for (i = 0; i < tRoot->keyCount - 1; i++) printf("%d ", tRoot->value[i]);
      if (tRoot != NULL) inOrder(tRoot);
      else printf("\nThe tree is empty!\n");
      
@@ -219,15 +218,23 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                parent->keys[0] = leftHalf;
                parent->keys[1] = rightHalf;
                
-               free(tempRoot); // Delete old root node box
+               //free(tempRoot); // Delete old root node box
                return parent;
              } else {
                for (i = 0; i < parent->keyCount; i++){ 
                    if (parent->keys[i] == tempRoot){
                       parent->keys[i]   = leftHalf;
                       parent->keys[i+1] = rightHalf;
+                   } else if (parent->keys[i] != NULL) {
+                      for (j = 0; j < parent->keys[i]->keyCount; j++){
+                          if (parent->keys[i]->keys[j] == tempRoot){
+                            parent->keys[i]->keys[j]   = leftHalf;
+                            parent->keys[i]->keys[j+1]  = rightHalf;
+                         }
+                      }
                    }
                }
+               
                free(tempRoot);
                return leftHalf;
              }
