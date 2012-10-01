@@ -15,6 +15,16 @@ struct nodePosition {
     struct node* box;
 };
 
+// Left-right stack for multiple splitting
+struct splitStack {
+    struct node *leftHalf;
+    struct node *rightHalf;
+    struct splitStack *next;
+} *head = NULL;
+
+void pushS(struct node *leftHalf, struct node *rightHalf);
+struct splitStack *popS();
+
 // Globals
 int treeOrder;
 
@@ -28,7 +38,7 @@ void doInOrder();
 // Tree Operations
 struct node* newNode(int value,struct node *parent);
 struct node* insertN(int value,struct node *root,struct node *parent);
-struct node* searchNValue(int value,struct node *root);
+struct nodePosition* searchNValue(int value,struct node *root);
 struct nodePosition* searchNBox(struct node *toFind,struct node *root);
 
 // Printing
@@ -209,14 +219,20 @@ struct node* insertN(int value,struct node *root,struct node *parent){
              struct node *rightHalf = NULL;
              
              for (i = 0; i <= left; i++){ // Move all left half data to new LeftHalf Box
-                 leftHalf = insertN(root->value[i],leftHalf,parent); // Set the parent to NULL temporarily
+                 leftHalf = insertN(root->value[i],leftHalf,NULL); // Set the parent to NULL temporarily
                  leftHalf->keys[i] = root->keys[i];
+                 
+                 if (root->keys[i] != NULL) root->keys[i]->parent = leftHalf;
              } leftHalf->keys[left+1] = root->keys[left+1];
+                 if (root->keys[treeOrder] != NULL) root->keys[treeOrder]->parent = leftHalf;
              
              for (i = right; i < treeOrder; i++){ // Move all right half data to new LeftHalf Box
-                 rightHalf = insertN(root->value[i],rightHalf,parent);
+                 rightHalf = insertN(root->value[i],rightHalf,NULL);
                  rightHalf->keys[i] = root->keys[i];
+                 
+                 if (root->keys[i] != NULL) root->keys[i]->parent = rightHalf;
              } rightHalf->keys[treeOrder] = root->keys[treeOrder];
+                 if (root->keys[treeOrder] != NULL) root->keys[treeOrder]->parent = rightHalf;
              
              int pIsNull = parent == NULL ? 1 : 0;
              struct node *tempRoot = root;
@@ -234,30 +250,27 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                return parent;
              } else {
                // Find the parent of the current left and right box
-               struct nodePosition *nodeF = searchNBox(tempRoot,parent);
-               if (nodeF != NULL){
-                  nodeF->box->keys[nodeF->key]   = leftHalf;
-                  nodeF->box->keys[nodeF->key+1] = rightHalf;
-               }
-               
-               /*
+               int found = 0;
                for (i = 0; i < parent->keyCount; i++){ 
-                   if (parent->keys[i] == tempRoot){
+                   if (parent->keys[i] != NULL && parent->keys[i] == tempRoot){
                       parent->keys[i]   = leftHalf;
                       parent->keys[i+1] = rightHalf;
-                   } else if (parent->keys[i] != NULL) {
-                      for (j = 0; j < parent->keys[i]->keyCount; j++){
-                          if (parent->keys[i]->keys[j] == tempRoot){
-                            parent->keys[i]->keys[j]   = leftHalf;
-                            parent->keys[i]->keys[j+1]  = rightHalf;
-                         }
-                      }
+                      
+                      leftHalf->parent = parent;
+                      rightHalf->parent = parent;
+                      found = 1;
                    }
                }
-               */
                
+    
+               struct nodePosition *nodeF = searchNBox(tempRoot,tRoot);
+               if (nodeF != NULL && !found) {
+                      printf("Beep: i is %d\n",nodeF->key);
+                      nodeF->box->keys[nodeF->key]   = leftHalf;
+                      nodeF->box->keys[nodeF->key+1] = rightHalf;
+               }
                
-               free(tempRoot);
+               //free(tempRoot);
                return leftHalf;
              }
              
@@ -268,13 +281,18 @@ struct node* insertN(int value,struct node *root,struct node *parent){
        return root;
 }
 
-struct node* searchNValue(int value,struct node *root){
+struct nodePosition* searchNValue(int value,struct node *root){
        int i;
-       struct node *nodeF = NULL;
+       struct nodePosition *nodeF = NULL;
        if (root == NULL) return NULL;
        else {
           for (i = 0; i < root->keyCount; i++){   // -1 since left and right key of every data box    
-            if (root->value[i] == value) return root;
+            if (root->value[i] == value) {
+               nodeF = (struct nodePosition*)malloc(sizeof(struct nodePosition));
+               nodeF->box = root;
+               nodeF->key = i;
+               return nodeF;
+            }
             else if (nodeF != NULL) return nodeF;
             else nodeF =  searchNValue(value,root->keys[i]);
           }  
@@ -289,6 +307,7 @@ struct nodePosition* searchNBox(struct node *toFind,struct node *root){
        else {
           for (i = 0; i < root->keyCount; i++){   // -1 since left and right key of every data box    
             if (root == toFind) {
+               nodeF = (struct nodePosition*)malloc(sizeof(struct nodePosition));
                nodeF->box = root;
                nodeF->key = i;
                return nodeF;
@@ -305,8 +324,8 @@ void inOrder(struct node *root){
      int i;
      if (root == NULL) return;
      else {
-          // root = root->keys[2];
-          for (i = 0; i < root->keyCount; i++){   // -1 since left and right key of every data box    
+           //root = root->keys[1]->keys[3];
+          for (i = 0; i < root->keyCount + 2; i++){   // -1 since left and right key of every data box    
             inOrder(root->keys[i]);
             if (i < root->keyCount - 1) printf("~%d~\n",root->value[i]);
           }
@@ -318,12 +337,12 @@ void levelOrder(struct node *root){
      if (root == NULL) return;
      else {
           for (i = 0; i < root->keyCount - 1; i++){   // -1 since left and right key of every data box    
-             printf("%d ",root->value[i]);
+             printf("Node %d : %d ",i,root->value[i]);
           }
           printf("   ");
           if (root->parent == NULL) printf("\n");
           else {
-               for (i = 0; i < root->parent->keyCount; i++){ // Check if had a right sibling, if none then proceed to next level
+               for (i = 0; i < root->parent->keyCount + 2; i++){ // Check if had a right sibling, if none then proceed to next level
                    if (root->parent->keys[i] == root){
                       if (root->parent->keys[i+1] == NULL) printf("\n");
                       break;
@@ -335,4 +354,27 @@ void levelOrder(struct node *root){
             levelOrder(root->keys[i]);
           }
      }
+}
+
+void pushS(struct node *leftHalf, struct node *rightHalf){
+     struct splitStack *newNode = (struct splitStack*)malloc(sizeof(struct splitStack));
+     newNode->leftHalf = leftHalf;
+     newNode->rightHalf = rightHalf;
+     if (head == NULL){
+        head = newNode;
+        head->next = NULL;
+     } else {
+        newNode->next = head;
+        head = newNode;
+     }
+}
+
+struct splitStack *popS(){
+       if (head == NULL) {
+          printf("Stack Underflow!!\n");
+          getch();
+          exit(-1);
+       } else {
+          
+       }
 }
