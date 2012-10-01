@@ -262,36 +262,32 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                
                
              } else {
-               // put left half properly
-                 if (ss != NULL){
+               // put left and right half properly
+                 int max = findMax(ss->leftHalf); // Max of left half
+                 struct nodePosition *position = searchNValue(max,tRoot);
+                 
+                 if (position != NULL){
+                    printf("Left half Max %d is Found at key: %d\n",max,position->key);
+                 }
+                
+                 if (ss != NULL && position != NULL){
                     // Find the parent of the current left and right box
                     int max = findMax(ss->leftHalf);
-                    for (i = 0; i < parent->keyCount; i++){
-                       if (max < parent->value[i]){
-                          parent->keys[i]   = ss->leftHalf;
-                          parent->keys[i+1] = ss->rightHalf;
+                    for (i = 0; i < position->box->parent->keyCount; i++){
+                       if (position->box->parent->keys[i] == position->box){
+                          position->box->parent->keys[i]   = ss->leftHalf;
+                          position->box->parent->keys[i+1] = ss->rightHalf;
                           
                           printf("Left half is: %d\n",ss->leftHalf->value[0]);
                           printf("Right half is: %d\n",ss->rightHalf->value[0]);
                           
-                          ss->leftHalf->parent = parent;
-                          ss->rightHalf->parent = parent;
+                          ss->leftHalf->parent = position->box->parent;
+                          ss->rightHalf->parent = position->box->parent;
                           break;
                        }
                     }
-               }
-               
-               /**
-               for (i = 0; i < parent->keyCount; i++){ 
-                   if (parent->keys[i] != NULL && parent->keys[i] == tempRoot){
-                      parent->keys[i]   = leftHalf;
-                      parent->keys[i+1] = rightHalf;
-                      
-                      leftHalf->parent = parent;
-                      rightHalf->parent = parent;
-                   }
-               }
-               **/
+                    
+                 }
                
                return ss->leftHalf;
              }
