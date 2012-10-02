@@ -15,12 +15,23 @@ struct nodePosition {
     struct node* box;
 };
 
+// Left-right stack for multiple splitting
+struct splitStack {
+    struct node *leftHalf;
+    struct node *rightHalf;
+    struct splitStack *next;
+} *head = NULL;
+
+void pushS(struct node *leftHalf, struct node *rightHalf);
+struct splitStack *popS();
+
 // Globals
 int treeOrder;
 
 // Menu functions
 void showMenu();
 void doInsert();
+void doDelete();
 void doSearch();
 void doInOrder();
 
@@ -31,7 +42,7 @@ struct nodePosition* searchNValue(int value,struct node *root);
 
 // Printing
 void inOrder(struct node *root);
-void leftRightPrint(struct node *root);
+void levelOrder(struct node *root);
 
 // Utils
 int findMax(struct node *root);
@@ -61,14 +72,16 @@ void showMenu(){
    
    printf("\n\n");
    printf("(1) Insert a Node\n");
-   printf("(2) Search a Node\n");
-   printf("(3) Print In Order\n");
-   printf("(4) Exit\n");
+   printf("(2) Delete a Node\n");
+   printf("(3) Search a Node\n");
+   printf("(4) Print In Order\n");
+   printf("(5) Exit\n");
     
   switch(getch()){
      case '1' : doInsert();   break;
-     case '2' : doSearch();   break;
-     case '3' : doInOrder();   break;
+     case '2' : doDelete();   break;
+     case '3' : doSearch();   break;
+     case '4' : doInOrder();   break;
      default  : exit(0);
   }                            
 }
@@ -84,6 +97,15 @@ void doInsert(){
      
      if (tRoot == NULL) tRoot = insertN(value,tRoot,NULL);
      else insertN(value,tRoot,NULL);
+     
+     printf("\n\n\nPress any key to continue...\n");
+     getch();
+     showMenu();
+}
+
+void doDelete(){
+     system("cls"); 
+     printf("--- Deletion ---\n");
      
      printf("\n\n\nPress any key to continue...\n");
      getch();
@@ -115,8 +137,8 @@ void doInOrder(){
      if (tRoot != NULL) inOrder(tRoot);
      else printf("\nThe tree is empty!\n");
      
-     printf("--- Left to Right Order ---\n");
-     if (tRoot != NULL) leftRightPrint(tRoot);
+     printf("--- Level Order ---\n");
+     if (tRoot != NULL) levelOrder(tRoot);
      else printf("\nThe tree is empty!\n");
      
      printf("\n\n\nPress any key to continue...\n");
@@ -219,13 +241,16 @@ struct node* insertN(int value,struct node *root,struct node *parent){
              struct node *tempRoot = root;
              struct node *pParent = pIsNull ? NULL : parent->parent;
              
-             parent = insertN(root->value[mid],parent,pParent); 
+             pushS(leftHalf,rightHalf);
+             parent = insertN(root->value[mid],parent,pParent);
+             
+             struct splitStack *ss = popS();  
               
              if (pIsNull){ // Special case if splitted is the tRoot (The very Root)
-               leftHalf->parent = parent;
-               rightHalf->parent = parent;
-               parent->keys[0] = leftHalf;
-               parent->keys[1] = rightHalf;
+               ss->leftHalf->parent = parent;
+               ss->rightHalf->parent = parent;
+               parent->keys[0] = ss->leftHalf;
+               parent->keys[1] = ss->rightHalf;
                
                tRoot = parent;
                //free(tempRoot); // Delete old root node box
@@ -239,34 +264,34 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                
              } else {
                // put left and right half properly
-                 int max = findMax(leftHalf); // Max of left half
+                 int max = findMax(ss->leftHalf); // Max of left half
                  struct nodePosition *position = searchNValue(max,tRoot);
                  
                  if (position != NULL){
                     printf("\nLeft half Max %d is Found at key: %d\n",max,position->key);
                  }
                 
-                 if (position != NULL){
+                 if (ss != NULL && position != NULL){
                     // Find the parent of the current left and right box
-                    int max = findMax(leftHalf);
+                    int max = findMax(ss->leftHalf);
                     for (i = 0; i < position->box->parent->keyCount; i++){
                        if (position->box->parent->keys[i] == position->box){
-                          printf("\nLeft half is: %d\n",leftHalf->value[0]);
-                          printf("Right half is: %d\n",rightHalf->value[0]);
+                          printf("\nLeft half is: %d\n",ss->leftHalf->value[0]);
+                          printf("Right half is: %d\n",ss->rightHalf->value[0]);
                           
-                          position->box->parent->keys[i]   = leftHalf;
-                          position->box->parent->keys[i+1] = rightHalf;
+                          position->box->parent->keys[i]   = ss->leftHalf;
+                          position->box->parent->keys[i+1] = ss->rightHalf;
                           
                           printf("Inserting Left half with Max of %d at key %d\n",max,i);
-                          printf("Inserting Right half with Max of %d at key %d\n",rightHalf->value[0],i+1);
+                          printf("Inserting Right half with Max of %d at key %d\n",ss->rightHalf->value[0],i+1);
                           
                           printf("Parent is %d\n",position->box->parent->value[i]);
                     
-                          leftHalf->parent = position->box->parent;
-                          rightHalf->parent = position->box->parent;
+                          ss->leftHalf->parent = position->box->parent;
+                          ss->rightHalf->parent = position->box->parent;
                          
-                          if ( position->box->parent->value[i] > tempRoot->value[mid] ) return rightHalf;
-                          else return leftHalf;
+                          if ( position->box->parent->value[i] > tempRoot->value[mid] ) return ss->rightHalf;
+                          else return ss->leftHalf;
                           
                           break;
                        }
@@ -274,7 +299,7 @@ struct node* insertN(int value,struct node *root,struct node *parent){
                     
                  }
                
-               return leftHalf;
+               return ss->leftHalf;
              }
              
           }
@@ -315,7 +340,7 @@ void inOrder(struct node *root){
      }
 }
 
-void leftRightPrint(struct node *root){
+void levelOrder(struct node *root){
      int i;
      if (root == NULL) return;
      else {
@@ -334,9 +359,33 @@ void leftRightPrint(struct node *root){
           }
           
           for (i = 0; i < root->keyCount; i++){
-            leftRightPrint(root->keys[i]);
+            levelOrder(root->keys[i]);
           }
      }
+}
+
+void pushS(struct node *leftHalf, struct node *rightHalf){
+     struct splitStack *newNode = (struct splitStack*)malloc(sizeof(struct splitStack));
+     newNode->leftHalf = leftHalf;
+     newNode->rightHalf = rightHalf;
+     if (head == NULL){
+        head = newNode;
+        head->next = NULL;
+     } else {
+        newNode->next = head;
+        head = newNode;
+     }
+}
+
+struct splitStack *popS(){
+       if (head == NULL) {
+          printf("Stack Underflow!!\n");
+          return NULL;
+       } else {
+          struct splitStack *temp = head;
+          head = head->next;
+          return temp;
+       }
 }
 
 int findMax(struct node *root){
